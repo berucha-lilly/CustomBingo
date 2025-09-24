@@ -128,11 +128,18 @@ export default function App() {
     setGrid(getGrid());
     setSelected(Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false)));
     // FREE SPACE will be set by useEffect
+    if (timerActive) {
+      setTimeLeft(300);
+    }
   }
 
   function handleTimerClick() {
-    setTimeLeft(300);
-    setTimerActive(true);
+    if (timerActive) {
+      setTimerActive(false);
+    } else {
+      setTimeLeft(300);
+      setTimerActive(true);
+    }
   }
 
   function formatTime(sec) {
