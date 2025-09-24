@@ -15,14 +15,20 @@
   padding-top: 50px;
 }
 
-.refresh-btn-container {
+.corner-btns {
   position: absolute;
   top: 20px;
-  right: 40px;
-  z-index: 10;
+  left: 0;
+  width: 100vw;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+.refresh-btn-container {
+  margin-left: 40px;
+}
+.timer-btn-container {
+  margin-right: 40px;
 }
 .timer-btn-wrapper {
   margin-top: 8px;
