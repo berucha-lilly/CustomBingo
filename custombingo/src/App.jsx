@@ -69,7 +69,7 @@ function getWinningCells(bingoLines) {
 }
 
 export default function App() {
-  const [grid, setGrid] = useState(getGrid());
+  const [grid] = useState(getGrid());
   const [selected, setSelected] = useState(
     Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false))
   );
