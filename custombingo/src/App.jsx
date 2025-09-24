@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import phrases from "./bingo-phrases.json";
 import "./App.css";
 
@@ -73,6 +73,14 @@ export default function App() {
   const [selected, setSelected] = useState(
     Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false))
   );
+  // Timer state
+  const [timerActive, setTimerActive] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 min in seconds
+  const timerRef = useRef(null);
+
+  const bingoLines = checkBingo(selected);
+  const winningCells = bingoLines ? getWinningCells(bingoLines) : [];
+
   // Pre-select FREE SPACE
   useEffect(() => {
     setSelected(sel => {
@@ -82,8 +90,24 @@ export default function App() {
     });
   }, [grid]);
 
-  const bingoLines = checkBingo(selected);
-  const winningCells = bingoLines ? getWinningCells(bingoLines) : [];
+  // Timer effect
+  useEffect(() => {
+    if (timerActive && timeLeft > 0) {
+      timerRef.current = setTimeout(() => {
+        setTimeLeft(t => t - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setTimerActive(false);
+    }
+    return () => clearTimeout(timerRef.current);
+  }, [timerActive, timeLeft]);
+
+  // Stop timer if bingo is hit
+  useEffect(() => {
+    if (timerActive && bingoLines) {
+      setTimerActive(false);
+    }
+  }, [bingoLines, timerActive]);
 
   function handleClick(r, c) {
     if (bingoLines) return; // No more selection after bingo
@@ -100,15 +124,32 @@ export default function App() {
   }
 
   function handleRefresh() {
-  setGrid(getGrid());
-  setSelected(Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false)));
+    setGrid(getGrid());
+    setSelected(Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false)));
     // FREE SPACE will be set by useEffect
+  }
+
+  function handleTimerClick() {
+    setTimeLeft(300);
+    setTimerActive(true);
+  }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
   return (
     <div className="bingo-container">
       <div className="refresh-btn-container">
         <button className="refresh-btn" onClick={handleRefresh} aria-label="Refresh Bingo Grid">🔄</button>
+        <div className="timer-btn-wrapper">
+          <button className="timer-btn" onClick={handleTimerClick} aria-label="Start 5 Minute Timer">⏲️</button>
+          {timerActive && (
+            <div className="timer-display">{formatTime(timeLeft)}</div>
+          )}
+        </div>
       </div>
       <header>
         <div className="dev-download">Dev Download</div>
