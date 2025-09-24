@@ -69,7 +69,7 @@ function getWinningCells(bingoLines) {
 }
 
 export default function App() {
-  const [grid] = useState(getGrid());
+  const [grid, setGrid] = useState(getGrid());
   const [selected, setSelected] = useState(
     Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false))
   );
@@ -80,7 +80,7 @@ export default function App() {
       copy[2][2] = true;
       return copy;
     });
-  }, []);
+  }, [grid]);
 
   const bingoLines = checkBingo(selected);
   const winningCells = bingoLines ? getWinningCells(bingoLines) : [];
@@ -99,8 +99,17 @@ export default function App() {
     return winningCells.some(([row, col]) => row === r && col === c);
   }
 
+  function handleRefresh() {
+  setGrid(getGrid());
+  setSelected(Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false)));
+    // FREE SPACE will be set by useEffect
+  }
+
   return (
     <div className="bingo-container">
+      <div className="refresh-btn-container">
+        <button className="refresh-btn" onClick={handleRefresh} aria-label="Refresh Bingo Grid">🔄</button>
+      </div>
       <header>
         <div className="dev-download">Dev Download</div>
         <div className={`bingo-title${bingoLines ? " pulsate" : ""}`}>BINGO</div>
