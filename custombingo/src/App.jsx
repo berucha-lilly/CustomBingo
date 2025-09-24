@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Timer } from "phosphor-react";
 import phrases from "./bingo-phrases.json";
 import "./App.css";
 
@@ -145,7 +146,9 @@ export default function App() {
       <div className="refresh-btn-container">
         <button className="refresh-btn" onClick={handleRefresh} aria-label="Refresh Bingo Grid">🔄</button>
         <div className="timer-btn-wrapper">
-          <button className="timer-btn" onClick={handleTimerClick} aria-label="Start 5 Minute Timer">⏲️</button>
+          <button className="timer-btn" onClick={handleTimerClick} aria-label="Start 5 Minute Timer">
+            <Timer size={32} weight="bold" />
+          </button>
           {timerActive && (
             <div className="timer-display">{formatTime(timeLeft)}</div>
           )}
