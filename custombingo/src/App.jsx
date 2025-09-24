@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useWindowSize } from "react-use";
+import Confetti from "react-confetti";
 import { Timer, ArrowsCounterClockwise } from "phosphor-react";
 import phrases from "./bingo-phrases.json";
 import "./App.css";
@@ -78,6 +80,7 @@ export default function App() {
   const [timerActive, setTimerActive] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 min in seconds
   const timerRef = useRef(null);
+  const { width, height } = useWindowSize();
 
   const bingoLines = checkBingo(selected);
   const winningCells = bingoLines ? getWinningCells(bingoLines) : [];
@@ -150,6 +153,9 @@ export default function App() {
 
   return (
     <div className="bingo-container">
+      {bingoLines && (
+        <Confetti width={width} height={height} numberOfPieces={300} recycle={true} />
+      )}
       <div className="corner-btns">
         <div className="refresh-btn-container">
           <button className="refresh-btn" onClick={handleRefresh} aria-label="Refresh Bingo Grid">

@@ -103,9 +103,22 @@ header {
 }
 
 @keyframes pulsate {
-  0% { color: #3bb273; }
-  50% { color: #1e7a3a; }
-  100% { color: #3bb273; }
+  0% {
+    color: #3bb273;
+    transform: scale(1);
+  }
+  40% {
+    color: #1e7a3a;
+    transform: scale(1.15);
+  }
+  60% {
+    color: #1e7a3a;
+    transform: scale(1.15);
+  }
+  100% {
+    color: #3bb273;
+    transform: scale(1);
+  }
 }
 
 
