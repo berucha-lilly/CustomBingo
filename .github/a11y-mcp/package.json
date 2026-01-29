@@ -1,0 +1,9 @@
+{
+  "name": "a11y-mcp-integration",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "@octokit/rest": "^22.0.1"
+  }
+}
