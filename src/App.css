@@ -158,6 +158,8 @@ header {
   overflow-wrap: break-word;
   word-break: break-word;
   white-space: normal;
+  -webkit-user-select: none;
+  user-select: none;
   color: #222; /* High contrast text */
   outline: none;
 }
