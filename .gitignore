@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.github/a11y-reviewer/node_modules
+.github/a11y-reviewer/a11y-results.json
+.a11y/cache

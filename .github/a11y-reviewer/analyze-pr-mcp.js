@@ -1,0 +1,152 @@
+#!/usr/bin/env node
+/**
+ * Analyze PR files for accessibility violations using MCP server with ESLint
+ */
+
+import fs from 'fs';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { analyzeFileHybrid } from './core/hybrid-analyzer.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+function resolveRepoRoot() {
+  try {
+    const gitRoot = execSync('git rev-parse --show-toplevel', {
+      encoding: 'utf8',
+      cwd: process.cwd(),
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+    if (gitRoot) return gitRoot;
+  } catch {
+    // fall through
+  }
+
+  // Fallbacks: current working directory, then script's repo root
+  return process.cwd() || path.resolve(__dirname, '../..');
+}
+
+const rootDir = resolveRepoRoot();
+const defaultResultsPath = path.join(__dirname, 'a11y-results.json');
+const repoResultsDir = path.join(rootDir, '.github', 'a11y-reviewer');
+const resultsPath = fs.existsSync(repoResultsDir)
+  ? path.join(repoResultsDir, 'a11y-results.json')
+  : defaultResultsPath;
+
+async function analyzePR() {
+  try {
+    console.log('📁 Detecting changed files in PR...');
+    
+    // Get changed files from git (run from repo root)
+    let changedFiles = [];
+    try {
+      // Get both committed changes and uncommitted changes
+      const committedOutput = execSync('git diff --name-only origin/main...HEAD', {
+        encoding: 'utf8',
+        cwd: rootDir
+      });
+      const uncommittedOutput = execSync('git diff --name-only', {
+        encoding: 'utf8',
+        cwd: rootDir
+      });
+      const untrackedOutput = execSync('git ls-files --others --exclude-standard', {
+        encoding: 'utf8',
+        cwd: rootDir
+      });
+      
+      const committed = committedOutput.split('\n').filter(f => f.trim() !== '');
+      const uncommitted = uncommittedOutput.split('\n').filter(f => f.trim() !== '');
+      const untracked = untrackedOutput.split('\n').filter(f => f.trim() !== '');
+      
+      // Combine and deduplicate
+      changedFiles = [...new Set([...committed, ...uncommitted, ...untracked])];
+    } catch (error) {
+      console.log('⚠️  Could not detect changed files.');
+      changedFiles = [];
+    }
+
+    // Filter for relevant file types
+    const relevantFiles = changedFiles.filter(f => 
+      /\.(jsx?|tsx?|html?|css|scss)$/i.test(f) && fs.existsSync(path.join(rootDir, f))
+    );
+
+    if (relevantFiles.length === 0) {
+      console.log('ℹ️  No relevant files to analyze.');
+      const results = {
+        analyzedFiles: 0,
+        filesWithViolations: 0,
+        summary: {
+          totalViolations: 0,
+          errors: 0,
+          warnings: 0
+        },
+        files: []
+      };
+      fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
+      process.exit(0);
+    }
+
+    console.log(`📊 Analyzing ${relevantFiles.length} files for accessibility violations...`);
+
+    let totalViolations = 0;
+    let totalErrors = 0;
+    let totalWarnings = 0;
+    const fileResults = [];
+
+    // Use ESLint-based analysis
+    for (const filePath of relevantFiles) {
+      const fullPath = path.join(rootDir, filePath);
+      const content = fs.readFileSync(fullPath, 'utf8');
+      
+      // Analyze using hybrid analyzer (ESLint + jsx-a11y)
+      const violations = await analyzeFileHybrid(content, filePath);
+
+      const errors = violations.filter(v => v.severity === 'error').length;
+      const warnings = violations.filter(v => v.severity === 'warning').length;
+
+      totalViolations += violations.length;
+      totalErrors += errors;
+      totalWarnings += warnings;
+
+      if (violations.length > 0) {
+        fileResults.push({
+          filePath,
+          violations,
+          summary: {
+            totalViolations: violations.length,
+            errors,
+            warnings
+          }
+        });
+        console.log(`  ❌ ${filePath}: ${violations.length} violation(s)`);
+      } else {
+        console.log(`  ✅ ${filePath}: No violations`);
+      }
+    }
+
+    // Write results
+    const results = {
+      analyzedFiles: relevantFiles.length,
+      filesWithViolations: fileResults.length,
+      summary: {
+        totalViolations,
+        errors: totalErrors,
+        warnings: totalWarnings
+      },
+      files: fileResults
+    };
+
+    fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
+    console.log('\n✅ Analysis complete!');
+    console.log(`📊 Total: ${totalViolations} violations (${totalErrors} errors, ${totalWarnings} warnings)`);
+
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Analysis failed:', error.message);
+    console.error(error.stack);
+    process.exit(1);
+  }
+}
+
+analyzePR();
